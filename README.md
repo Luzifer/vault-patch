@@ -24,7 +24,3 @@ field3                  test3
 ```
 
 As you can see only the data given in the command was touched and the `field1` was kept as it was before.
-
-----
-
-![project status](https://d2o84fseuhwkxk.cloudfront.net/vault-patch.svg)

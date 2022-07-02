@@ -5,11 +5,12 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/Luzifer/rconfig"
-	log "github.com/Sirupsen/logrus"
 	"github.com/hashicorp/vault/api"
-	kvbuilder "github.com/hashicorp/vault/helper/kv-builder"
 	homedir "github.com/mitchellh/go-homedir"
+	log "github.com/sirupsen/logrus"
+
+	"github.com/Luzifer/go_helpers/v2/env"
+	"github.com/Luzifer/rconfig/v2"
 )
 
 var (
@@ -89,12 +90,7 @@ func main() {
 		data = make(map[string]interface{})
 	}
 
-	builder := kvbuilder.Builder{Stdin: os.Stdin}
-	if err := builder.Add(rconfig.Args()[2:len(rconfig.Args())]...); err != nil {
-		log.Fatalf("Unable to parse data: %s", err)
-	}
-
-	for k, v := range builder.Map() {
+	for k, v := range env.ListToMap(rconfig.Args()[2:len(rconfig.Args())]) {
 		data[k] = v
 	}
 
