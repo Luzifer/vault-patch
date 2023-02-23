@@ -48,8 +48,8 @@ require (
 	go.uber.org/atomic v1.9.0 // indirect
 	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d // indirect
 	golang.org/x/net v0.0.0-20220630215102-69896b714898 // indirect
-	golang.org/x/sys v0.0.0-20220702020025-31831981b65f // indirect
-	golang.org/x/text v0.3.7 // indirect
+	golang.org/x/sys v0.0.0-20220722155257-8c9f86f7a55f // indirect
+	golang.org/x/text v0.3.8 // indirect
 	golang.org/x/time v0.0.0-20220609170525-579cf78fd858 // indirect
 	google.golang.org/genproto v0.0.0-20220630174209-ad1d48641aa7 // indirect
 	google.golang.org/grpc v1.47.0 // indirect
