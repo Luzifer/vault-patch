@@ -2,12 +2,11 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	"github.com/hashicorp/vault/api"
 	homedir "github.com/mitchellh/go-homedir"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 
 	"github.com/Luzifer/go_helpers/v2/env"
 	"github.com/Luzifer/rconfig/v2"
@@ -30,7 +29,7 @@ func vaultTokenFromDisk() string {
 		return ""
 	}
 
-	data, err := ioutil.ReadFile(vf)
+	data, err := os.ReadFile(vf) //#nosec G304 // Intended to load file from disk
 	if err != nil {
 		return ""
 	}
@@ -38,42 +37,45 @@ func vaultTokenFromDisk() string {
 	return string(data)
 }
 
-func loadConfig() error {
-	rconfig.SetVariableDefaults(map[string]string{
-		"vault-token": vaultTokenFromDisk(),
-	})
-	if err := rconfig.Parse(&cfg); err != nil {
-		return err
+func initApp() (err error) {
+	rconfig.SetVariableDefaults(map[string]string{"vault-token": vaultTokenFromDisk()})
+	rconfig.AutoEnv(true)
+
+	if err = rconfig.Parse(&cfg); err != nil {
+		return fmt.Errorf("parsing CLI options: %w", err)
 	}
 
-	if cfg.VersionAndExit {
-		fmt.Printf("vault-patch %s\n", version)
-		os.Exit(0)
+	logLevel, err := logrus.ParseLevel(cfg.LogLevel)
+	if err != nil {
+		return fmt.Errorf("parsing log level: %w", err)
 	}
 
-	if logLevel, err := log.ParseLevel(cfg.LogLevel); err == nil {
-		log.SetLevel(logLevel)
-	} else {
-		return fmt.Errorf("Unable to parse log level: %s", err)
-	}
+	logrus.SetLevel(logLevel)
 
 	return nil
 }
 
 func main() {
-	if err := loadConfig(); err != nil {
-		log.Fatalf("Unable to load CLI config: %s", err)
+	var err error
+
+	if err = initApp(); err != nil {
+		logrus.WithError(err).Fatal("initializing app")
 	}
 
-	if len(rconfig.Args()) < 2 {
-		log.Fatalf("Usage: vault-patch [options] path data")
+	if cfg.VersionAndExit {
+		fmt.Printf("vault-patch %s\n", version) //nolint:forbidigo
+		os.Exit(0)
+	}
+
+	if len(rconfig.Args()) < 2 { //nolint:gomnd
+		logrus.Fatal("Usage: vault-patch [options] <path> <data>")
 	}
 
 	client, err := api.NewClient(&api.Config{
 		Address: cfg.VaultAddress,
 	})
 	if err != nil {
-		log.Fatalf("Unable to create Vault client: %s", err)
+		logrus.WithError(err).Fatal("creating Vault client")
 	}
 
 	client.SetToken(cfg.VaultToken)
@@ -82,21 +84,21 @@ func main() {
 
 	s, err := client.Logical().Read(key)
 	if err != nil || s == nil {
-		log.Fatalf("Could not read key %q from vault: %s", key, err)
+		logrus.WithError(err).Fatal("reading key from vault")
 	}
 
 	data := s.Data
 	if data == nil {
-		data = make(map[string]interface{})
+		data = make(map[string]any)
 	}
 
-	for k, v := range env.ListToMap(rconfig.Args()[2:len(rconfig.Args())]) {
+	for k, v := range env.ListToMap(rconfig.Args()[2:]) {
 		data[k] = v
 	}
 
 	if _, err := client.Logical().Write(key, data); err != nil {
-		log.Fatalf("Could not write data to key %q: %s", key, err)
+		logrus.WithError(err).Fatal("writing data to key")
 	}
 
-	log.Printf("Data successfully written to key %q", key)
+	logrus.Print("data successfully written to key")
 }
