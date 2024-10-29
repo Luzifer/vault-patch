@@ -1,3 +1,7 @@
+# 0.3.1 / 2024-10-29
+
+  * Update Go dependencies
+
 # 0.3.0 / 2024-04-10
 
   * Modernize code
