@@ -67,7 +67,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	if len(rconfig.Args()) < 2 { //nolint:gomnd
+	if len(rconfig.Args()) < 2 { //nolint:mnd
 		logrus.Fatal("Usage: vault-patch [options] <path> <data>")
 	}
 
